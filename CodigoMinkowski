@@ -1,0 +1,74 @@
+import pandas as pd
+import random
+import numpy as np
+from collections import Counter
+
+# Cargar la base de datos Iris desde Scikit-Learn
+iris = datasets.load_iris()
+
+# Obtener las características y las etiquetas de especies
+data = iris.data
+species = iris.target
+
+# Obtener índices de las filas correspondientes a cada clase
+indices_clase_1 = range(1, 51)  # Clase 1: filas del 2 al 51
+indices_clase_2 = range(51, 101)  # Clase 2: filas del 52 al 101
+indices_clase_3 = range(101, 151)  # Clase 3: filas del 102 al 151
+
+# Seleccionar de forma aleatoria dos puntos de cada clase
+random.seed(45)  # Para reproducibilidad
+puntos_seleccionados = []
+puntos_seleccionados.extend(random.sample(indices_clase_1, 2))
+puntos_seleccionados.extend(random.sample(indices_clase_2, 2))
+puntos_seleccionados.extend(random.sample(indices_clase_3, 2))
+
+# Calcular las distancias de Minkowski entre los puntos seleccionados y el resto de los puntos
+distancias = {}
+for punto_seleccionado in puntos_seleccionados:
+    distancias[punto_seleccionado] = []
+    for i in range(len(data)):
+        if punto_seleccionado != i:
+            distancia = minkowski_distance(data[punto_seleccionado], data[i], p=1)
+            distancias[punto_seleccionado].append((i, distancia))
+
+# Imprimir las distancias
+for punto_seleccionado, distancias_punto in distancias.items():
+    print(f'Distancias para el punto {punto_seleccionado}:')
+    for i, distancia in distancias_punto:
+        print(f'  Punto {i}: {distancia}')
+
+# Calcular la suma de distancias para cada punto y encontrar el punto con la mayor suma
+mayor_suma_punto = None
+mayor_suma = 0
+for punto_seleccionado, distancias_punto in distancias.items():
+    suma_distancias = sum(distancia for _, distancia in distancias_punto)
+    if suma_distancias > mayor_suma:
+        mayor_suma = suma_distancias
+        mayor_suma_punto = punto_seleccionado
+
+# Definir el valor de k para la clasificación
+k = 3
+
+# Realizar la clasificación por votación
+class_votes = []
+for punto_seleccionado, distancias_punto in sorted_distancias.items():
+    neighbors = distancias_punto[:k]
+    neighbor_classes = [species[i] for i, _ in neighbors]
+    class_counter = Counter(neighbor_classes)
+    most_common_class = class_counter.most_common(1)[0][0]
+    class_votes.append((punto_seleccionado, most_common_class))
+
+# Imprimir el resultado de la clasificación por votación
+for punto_seleccionado, clase_estimada in class_votes:
+    print(f'Punto {punto_seleccionado}: Clase estimada {clase_estimada}')
+
+# Realizar la clasificación por votación para el punto con la mayor suma
+k = 3
+neighbors = sorted(distancias[mayor_suma_punto], key=lambda x: x[1])[:k]
+neighbor_classes = [species[i] for i, _ in neighbors]
+class_counter = Counter(neighbor_classes)
+most_common_class = class_counter.most_common(1)[0][0]
+
+# Imprimir el punto con la mayor suma y su clase estimada
+print(f'Punto con la mayor suma de distancias: {mayor_suma_punto}')
+print(f'Clase estimada para el punto: {most_common_class}')
